@@ -25,7 +25,7 @@ namespace ImageApi.Controllers
 
             if (_context.Images.Count() == 0)
             {
-                _context.Images.Add(new ImageData { ImageBytes = System.IO.File.ReadAllBytes("temptato.jpg") });
+                _context.Images.Add(new ImageData { ImageBytes = System.IO.File.ReadAllBytes("Beach.jpg") });
                 _context.SaveChanges();
             }
         }
@@ -34,7 +34,6 @@ namespace ImageApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ImageData>>> GetImages()
         {
-            //return System.IO.File.ReadAllBytes("temptato.jpg");
             return await _context.Images.ToListAsync();
         }
 
@@ -49,31 +48,86 @@ namespace ImageApi.Controllers
                 return NotFound();
             }
 
-            ImageData newImage = new ImageData();
+            return image;
+        }
+
+        // GET: api/Images/5/Brightness/5
+        [HttpGet("{id}/Brightness/{amount}")]
+        public async Task<ActionResult<ImageData>> GetImageBrightness(long id,int amount)
+        {
+            var image = await _context.Images.FindAsync(id);
+
+            if (image == null)
+            {
+                return NotFound();
+            }
 
             byte[] photoBytes = image.ImageBytes;
-            // Format is automatically detected though can be changed.
-            ISupportedImageFormat format = new JpegFormat { Quality = 70 };
             using (MemoryStream inStream = new MemoryStream(photoBytes))
             {
                 using (MemoryStream outStream = new MemoryStream())
                 {
-                    // Initialize the ImageFactory using the overload to preserve EXIF metadata.
                     using (ImageFactory imageFactory = new ImageFactory(preserveExifData: true))
                     {
-                        // Load, resize, set the format and quality and save an image.
                         imageFactory.Load(inStream)
-                                    .Format(format)
-                                    .Brightness(25)
+                                    .Brightness(amount)
                                     .Save(outStream);
                     }
-                    // Do something with the stream.
-                    newImage.ImageBytes = outStream.ToArray();
-                    Console.WriteLine(newImage.ImageBytes);
+                    image.ImageBytes = outStream.ToArray();
+                }
+            }
+            await _context.SaveChangesAsync();
+
+            return image;
+        }
+
+        // GET: api/Images/5/Hue/5
+        [HttpGet("{id}/Hue/{amount}")]
+        public async Task<ActionResult<ImageData>> GetImageHue(long id, int amount)
+        {
+            var image = await _context.Images.FindAsync(id);
+
+            if (image == null)
+            {
+                return NotFound();
+            }
+
+            byte[] photoBytes = image.ImageBytes;
+            using (MemoryStream inStream = new MemoryStream(photoBytes))
+            {
+                using (MemoryStream outStream = new MemoryStream())
+                {
+                    using (ImageFactory imageFactory = new ImageFactory(preserveExifData: true))
+                    {
+                        imageFactory.Load(inStream)
+                                    .Hue(amount)
+                                    .Save(outStream);
+                    }
+                    image.ImageBytes = outStream.ToArray();
                 }
             }
 
-            return newImage;
+            await _context.SaveChangesAsync();
+
+            return image;
+        }
+
+        // GET: api/Images/5/Reset
+        [HttpGet("{id}/Reset")]
+        public async Task<ActionResult<ImageData>> GetImageReset(long id, int amount)
+        {
+            var image = await _context.Images.FindAsync(id);
+
+            if (image == null)
+            {
+                return NotFound();
+            }
+
+            image.ImageBytes = System.IO.File.ReadAllBytes("Beach.jpg");
+
+            await _context.SaveChangesAsync();
+
+            return image;
         }
 
         // PUT: api/Images/5
@@ -140,5 +194,7 @@ namespace ImageApi.Controllers
         {
             return _context.Images.Any(e => e.Id == id);
         }
+
+
     }
 }

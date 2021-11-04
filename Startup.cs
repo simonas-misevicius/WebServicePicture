@@ -29,7 +29,6 @@ namespace ImageApi
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
             });
 
-            services.AddDbContext<TodoContext>(options => options.UseInMemoryDatabase("TodoList"));
             services.AddDbContext<ImageContext>(options => options.UseInMemoryDatabase("ImageList"));
         }
 
